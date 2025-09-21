@@ -36,23 +36,101 @@ app = FastAPI(
 )
 
 # -------------------------
-# CORS - DEVE VIR ANTES DE TODOS OS ROUTERS
+# CORS Configuration - MUST COME BEFORE ALL ROUTERS
 # -------------------------
+# Define allowed origins
+allowed_origins = [
+    "https://projectlawyer.netlify.app",
+    "https://law-firm-backend-936902782519.us-central1.run.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://localhost:8080",
+    "http://localhost:8000",
+]
+
+# Add CORS middleware with comprehensive configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://projectlawyer.netlify.app",
-        "http://localhost:3000",
-        "http://localhost:5173",
-        "http://localhost:8080",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
-    allow_headers=["*"],
-    expose_headers=["*"],
+    allow_headers=[
+        "Accept",
+        "Accept-Language",
+        "Content-Language",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+        "X-Request-ID",
+        "X-HTTP-Method-Override",
+        "Cache-Control",
+        "Pragma",
+        "Expires"
+    ],
+    expose_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Request-ID",
+        "Cache-Control"
+    ],
+    max_age=3600,  # Cache preflight requests for 1 hour
 )
+
+# Add manual CORS headers for additional safety
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    """Add CORS headers manually for additional safety."""
+    response = await call_next(request)
+    
+    # Get origin from request
+    origin = request.headers.get("origin")
+    
+    # Check if origin is allowed
+    if origin in allowed_origins:
+        response.headers["Access-Control-Allow-Origin"] = origin
+    elif origin and origin.startswith("http://localhost:"):
+        # Allow any localhost origin for development
+        response.headers["Access-Control-Allow-Origin"] = origin
+    else:
+        # Default to first allowed origin if no match
+        response.headers["Access-Control-Allow-Origin"] = allowed_origins[0]
+    
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+    response.headers["Access-Control-Allow-Headers"] = "Accept, Accept-Language, Content-Language, Content-Type, Authorization, X-Requested-With, X-Request-ID, X-HTTP-Method-Override, Cache-Control, Pragma, Expires"
+    response.headers["Access-Control-Expose-Headers"] = "Content-Type, Authorization, X-Request-ID, Cache-Control"
+    response.headers["Access-Control-Max-Age"] = "3600"
+    
+    return response
+
+# Handle preflight OPTIONS requests globally
+@app.options("/{full_path:path}")
+async def options_handler(request: Request, full_path: str):
+    """Handle preflight OPTIONS requests for all routes."""
+    origin = request.headers.get("origin")
+    
+    # Determine allowed origin
+    if origin in allowed_origins:
+        allowed_origin = origin
+    elif origin and origin.startswith("http://localhost:"):
+        allowed_origin = origin
+    else:
+        allowed_origin = allowed_origins[0]
+    
+    headers = {
+        "Access-Control-Allow-Origin": allowed_origin,
+        "Access-Control-Allow-Credentials": "true",
+        "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+        "Access-Control-Allow-Headers": "Accept, Accept-Language, Content-Language, Content-Type, Authorization, X-Requested-With, X-Request-ID, X-HTTP-Method-Override, Cache-Control, Pragma, Expires",
+        "Access-Control-Expose-Headers": "Content-Type, Authorization, X-Request-ID, Cache-Control",
+        "Access-Control-Max-Age": "3600",
+        "Content-Length": "0"
+    }
+    
+    return JSONResponse(content="", status_code=200, headers=headers)
+
 # -------------------------
-# Include routers (DEPOIS DO CORS)
+# Include routers (AFTER CORS)
 # -------------------------
 app.include_router(test_router, prefix="/api/v1", tags=["Test"])
 app.include_router(chat_router, prefix="/api/v1", tags=["Chat"])
