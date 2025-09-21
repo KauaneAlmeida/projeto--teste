@@ -320,24 +320,21 @@ ${message}
         try {
             // IMPORTAÇÃO CORRIGIDA DO BAILEYS
             const baileys = require('@whiskeysockets/baileys');
-            console.log('🔍 Baileys object keys:', Object.keys(baileys));
             
-            // Tentar diferentes formas de importar makeWASocket
-            const makeWASocket = baileys.default?.default || baileys.default || baileys.makeWASocket || baileys;
-            const DisconnectReason = baileys.DisconnectReason || baileys.default?.DisconnectReason;
-            const useMultiFileAuthState = baileys.useMultiFileAuthState || baileys.default?.useMultiFileAuthState;
+            // Correct Baileys imports
+            const { makeWASocket, DisconnectReason, useMultiFileAuthState } = baileys;
             
             // Verificar se conseguimos as funções necessárias
             if (typeof makeWASocket !== 'function') {
-                throw new Error(`makeWASocket não é uma função. Tipo: ${typeof makeWASocket}. Baileys keys: ${Object.keys(baileys)}`);
+                throw new Error(`makeWASocket is not a function. Type: ${typeof makeWASocket}`);
             }
             
             if (!DisconnectReason) {
-                throw new Error('DisconnectReason não encontrado');
+                throw new Error('DisconnectReason not found');
             }
             
             if (typeof useMultiFileAuthState !== 'function') {
-                throw new Error('useMultiFileAuthState não é uma função');
+                throw new Error('useMultiFileAuthState is not a function');
             }
             
             const { Boom } = require('@hapi/boom');
@@ -545,6 +542,11 @@ ${message}
             } catch (error) {
                 console.error('❌ Erro ao processar mensagem recebida:', error);
             }
+        });
+
+        // Handle socket errors
+        this.sock.ev.on('connection.error', (error) => {
+            console.error('❌ Connection error:', error);
         });
     }
 

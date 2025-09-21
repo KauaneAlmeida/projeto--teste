@@ -25,39 +25,39 @@ _firestore_client = None
 
 def initialize_firebase():
     """
-    Inicializa o Firebase Admin SDK a partir da variável de ambiente FIREBASE_KEY.
+    Initialize Firebase Admin SDK from FIREBASE_KEY environment variable.
     """
     global _firebase_app, _firestore_client
 
     if _firebase_app is not None:
-        logger.info("✅ Firebase já inicializado")
+        logger.info("✅ Firebase already initialized")
         return
 
     try:
         firebase_key = os.getenv("FIREBASE_KEY")
         if not firebase_key:
-            raise ValueError("Variável de ambiente FIREBASE_KEY não encontrada.")
+            raise ValueError("FIREBASE_KEY environment variable not found.")
 
-        # Converte o JSON que veio da env em dict
+        # Convert JSON from env to dict
         firebase_credentials = json.loads(firebase_key)
         cred = credentials.Certificate(firebase_credentials)
 
-        logger.info("🔥 Inicializando Firebase com credenciais do Secret Manager")
+        logger.info("🔥 Initializing Firebase with credentials from environment")
         _firebase_app = firebase_admin.initialize_app(cred)
         _firestore_client = firestore.client()
-        logger.info("✅ Firebase inicializado com sucesso")
+        logger.info("✅ Firebase initialized successfully")
 
     except Exception as e:
-        logger.error(f"❌ Falha ao inicializar Firebase: {str(e)}")
+        logger.error(f"❌ Failed to initialize Firebase: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Falha na inicialização do Firebase: {str(e)}",
+            detail=f"Firebase initialization failed: {str(e)}",
         )
 
 
 def get_firestore_client():
     """
-    Retorna a instância do cliente Firestore.
+    Return Firestore client instance.
     """
     if _firestore_client is None:
         initialize_firebase()
@@ -65,7 +65,7 @@ def get_firestore_client():
     if _firestore_client is None:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Firestore client não disponível",
+            detail="Firestore client not available",
         )
 
     return _firestore_client

@@ -4,7 +4,7 @@ services:
   law_firm_backend:
     build:
       context: .
-      dockerfile: Dockerfile.backend
+      dockerfile: Dockerfile
     container_name: law_firm_backend
     restart: always
     ports:
@@ -15,8 +15,6 @@ services:
       - WHATSAPP_BOT_URL=http://law_firm_whatsapp_bot:8080   # 👈 interno 8080
     env_file:
       - .env
-    volumes:
-      - ./firebase-key.json:/firebase-key.json:ro
     networks:
       - law_firm_network
     depends_on:
@@ -54,7 +52,6 @@ services:
     volumes:
       - whatsapp_session:/app/whatsapp_session
       - whatsapp_messages:/app/messages
-      - ./firebase-key.json:/firebase-key.json:ro
     networks:
       - law_firm_network
     healthcheck:
