@@ -1,7 +1,7 @@
-FROM node:18-alpine
+FROM node:18
 
 # Instalar dependências mínimas necessárias
-RUN apk add --no-cache curl git
+RUN apt-get update && apt-get install -y curl git && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
