@@ -11,6 +11,7 @@ import json
 import os
 from typing import Dict, Any
 from fastapi import APIRouter, HTTPException, status
+from fastapi.responses import JSONResponse
 
 from app.models.request import ConversationRequest
 from app.models.response import ConversationResponse
@@ -41,12 +42,23 @@ async def start_conversation():
             platform="web"
         )
         
-        return ConversationResponse(
+        response_data = ConversationResponse(
             session_id=session_id,
             response=result.get("response", "Olá! Para garantir que registramos corretamente suas informações, vamos começar do início. Tudo bem?"),
             ai_mode=False,
             flow_completed=False,
             phone_collected=False
+        )
+        
+        # Return with explicit CORS headers
+        return JSONResponse(
+            content=response_data.dict(),
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization"
+            }
         )
 
     except Exception as e:
@@ -82,7 +94,7 @@ async def respond_to_conversation(request: ConversationRequest):
             platform="web"
         )
         
-        return ConversationResponse(
+        response_data = ConversationResponse(
             session_id=request.session_id,
             response=result.get("response", "Como posso ajudá-lo?"),
             ai_mode=False,
@@ -90,6 +102,17 @@ async def respond_to_conversation(request: ConversationRequest):
             phone_collected=result.get("phone_submitted", False),
             lead_data=result.get("lead_data", {}),
             message_count=result.get("message_count", 1)
+        )
+        
+        # Return with explicit CORS headers
+        return JSONResponse(
+            content=response_data.dict(),
+            headers={
+                "Access-Control-Allow-Origin": "*",
+                "Access-Control-Allow-Credentials": "true",
+                "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
+                "Access-Control-Allow-Headers": "Content-Type, Authorization"
+            }
         )
 
     except Exception as e:
